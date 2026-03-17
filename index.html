@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <style>
+    table {
+      width: 50%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      background-color: aqua;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 30%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Student List</h1>
+    <button id="addStudentBtn">Add Student</button>
+  </div>
+
+  <div class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Add New Student</h2>
+      <form id="addStudentForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required /><br /><br />
+        <label for="age">Age:</label>
+        <input type="number" id="age" name="age" required /><br /><br />
+        <label for="grade">Grade:</label>
+        <input type="text" id="grade" name="grade" required /><br /><br />
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </div>
+
+  <table border="1" id="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Grade</th>
+      </tr>
+    </thead>
+    <tbody id="studentTable"></tbody>
+  </table>
+
+  <script>
+    $(document).ready(function () {
+      $('.modal').hide();
+
+      $.ajax({
+        url: 'http://localhost:3001/students',
+        type: 'GET',
+        dataType: 'json',
+        success: function (data) {
+          // Supports: [] OR { students: [] }
+          const students = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.students)
+              ? data.students
+              : [];
+
+          $('#studentTable').empty();
+
+          students.forEach(function (student) {
+            $('#studentTable').append(
+              `<tr>
+                <td>${student.id ?? ''}</td>
+                <td>${student.name ?? ''}</td>
+                <td>${student.age ?? ''}</td>
+                <td>${student.grade ?? ''}</td>
+              </tr>`
+            );
+          });
+        },
+        error: function (xhr, status, error) {
+          console.error('Error fetching students:', status, error, xhr.responseText);
+        }
+      });
+
+      $('#addStudentBtn').click(function () {
+        $('.modal').show();
+        $('#table').hide();
+      });
+
+      $('.close').click(function () {
+        $('.modal').hide();
+        $('#table').show();
+      });
+
+      $('#addStudentForm').submit(function (e) {
+        e.preventDefault();
+
+        const newStudent = {
+          name: $('#name').val(),
+          age: parseInt($('#age').val(), 10),
+          grade: $('#grade').val()
+        };
+
+        $.ajax({
+          url: 'http://localhost:3001/students',
+          type: 'POST',
+          contentType: 'application/json',
+          dataType: 'json',
+          data: JSON.stringify(newStudent),
+          success: function (data) {
+            $('#studentTable').append(
+              `<tr>
+                <td>${data.id ?? ''}</td>
+                <td>${data.name ?? ''}</td>
+                <td>${data.age ?? ''}</td>
+                <td>${data.grade ?? ''}</td>
+              </tr>`
+            );
+
+            $('.modal').hide();
+            $('#table').show();
+            $('#addStudentForm')[0].reset();
+          },
+          error: function (xhr, status, error) {
+            console.error('Error adding student:', status, error, xhr.responseText);
+          }
+        });
+      });
+    });
+  </script>
+</body>
+
+</html>
